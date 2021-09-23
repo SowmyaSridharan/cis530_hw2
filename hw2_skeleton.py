@@ -113,16 +113,23 @@ def load_file(data_file):
 
 
 def all_complex_feature(words):
-
-    # Labels every word complex
+    features = []
+    for i in len(words):
+        features.append(1)
+    return features
 
 
 def all_complex(data_file):
+
+    # import the training and development data
     words, labels = load_file(data_file)
 
-    precision = get_precision()
+    predicition = all_complex_feature(words)
 
-    performance = [precision, recall, fscore]
+    # test the prediction
+    test_predictions(predicition, labels)
+    res_performance = prediction_metrics(predicition, labels)
+
     return performance
 
 
