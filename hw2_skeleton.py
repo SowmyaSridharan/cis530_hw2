@@ -312,7 +312,7 @@ def naive_bayes(training_file, development_file, counts):
     # generate predictions
 
     training_predictions = clf.predict(y_test_reshape)
-    # development_predictions = clf.predict(development_features)
+    development_predictions = clf.predict(development_features)
 
     # return the metrics of the training data
     training_performance = prediction_metrics(
@@ -326,56 +326,6 @@ def naive_bayes(training_file, development_file, counts):
     print("===== Training Data Result =====")
     test_predictions(training_predictions, training_labels)
 
-    # TRAINING
-    # generate all the feature
-    # feat_trn = generate_feature(w_training, counts)
-
-    # normalize the feature
-    # X_scaled_training = normalize(feat_trn)
-
-    # Split the model
-    # print("split the training data")
-    # X_train_t, X_test_t, y_train_t, y_test_t = train_test_split(
-    #     X_scaled_training, y_training, test_size=0.3, random_state=42)
-
-    # Run the model
-    # model = GaussianNB()
-    # print("generate training")
-
-    # train the model for training
-    # model.fit(X_train_t, y_train_t)
-
-    # predict the model for training
-    # y_test_reshape = np.reshape(y_test_t, (-1, 1))
-    # y_pred_res = model.predict(X_test_t)
-
-    # show metrics of the result for training
-    # test_predictions(y_pred_res, y_test_reshape)
-
-    # DEVELOPMENT
-    # w_development, y_development = load_file(
-    #     '/gdrive/MyDrive/cis530/data/complex_words_development.txt')
-
-    # # generate feature based on development file
-    # feat_dev = generate_feature(w_development, counts)
-    # # normalize the development
-    # X_scaled_develop = normalize(feat_dev)
-
-    # # reshape the y_actual
-    # y_dev_reshape = np.reshape(y_development, (-1, 1))
-
-    # # predict based on the X_scaled
-    # y_dev_prediction = model.predict(X_scaled_develop)
-
-    # # print the f1, recall, precision.
-    # print('test development')
-    # test_predictions(y_dev_prediction, y_dev_reshape)
-
-    # print('get all f1 score')
-
-    # training_performance = (tprecision, trecall, tfscore)
-    # development_performance = (dprecision, drecall, dfscore)
-    # return development_performance
 
 # 2.5: Logistic Regression
 
