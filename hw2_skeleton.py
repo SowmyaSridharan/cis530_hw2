@@ -17,6 +17,7 @@ import gzip
 # Input: y_pred, a list of length n with the predicted labels,
 # y_true, a list of length n with the true labels
 
+# DONE
 # Calculates the precision of the predicted labels
 
 
@@ -36,6 +37,7 @@ def get_precision(y_pred, y_true):
 
     return precision
 
+# DONE
 # Calculates the recall of the predicted labels
 
 
@@ -56,17 +58,36 @@ def get_recall(y_pred, y_true):
 
     return recall
 
+# DONE
 # Calculates the f-score of the predicted labels
 
 
 def get_fscore(y_pred, y_true):
-
     prec = get_precision(y_pred, y_true)
     rec = get_recall(y_pred, y_true)
     tot = prec + rec
     fscore = 2 * (prec * rec) / (prec + rec) if tot else 0
 
     return fscore
+
+
+# combine all metrics , return all of precision, recall, and 1 score
+def prediction_metrics(y_pred, y_true):
+    prec_test = get_precision(y_pred, y_true)
+    rec_test = get_recall(y_pred, y_true)
+    f_score_test = f_score(y_pred, y_true)
+    return prec_test, rec_test, f_score_test
+
+# print the prediction result
+
+
+def test_predictions(y_prediction, y_actual):
+    prec, rec, f_score = prediction_metrics(y_prediction, y_actual)
+
+    print("Precision result is %f" % prec)
+    print("Recall result is %f" % rec)
+    print("F-score test result is %f" % f_score)
+
 
 #### 2. Complex Word Identification ####
 
@@ -107,7 +128,8 @@ def all_complex(data_file):
 
 # 2.2: Word length thresholding
 
-# ADDITIONAL CODE
+
+# ADDITIONAL
 # length of each of the word and add into the list
 def length_of_word_list(pandas_list):
     ret_list = []
@@ -118,21 +140,22 @@ def length_of_word_list(pandas_list):
 
     return ret_list
 
-
-def average_of_length(num_list):
-    print(type(num_list))
-    avg_length = sum(num_list) / len(num_list)
-    return avg_length
+# classification based on the thresdhold
 
 
-def average_of_length(num_list):
-    print(type(num_list))
-    avg_length = sum(num_list) / len(num_list)
-    return avg_length
-
+def classify_based_on_threshold(list_words, thres):
+    res = []
+    for word in list_words:
+        if counts[word] >= thres:
+            res.append(1)
+        else:
+            res.append(0)
+    return res
 
 # MAIN CODE
 # Makes feature matrix for word_length_threshold
+
+
 def length_threshold_feature(words, threshold):
     res = []
     for word in words:
@@ -147,33 +170,44 @@ def length_threshold_feature(words, threshold):
 
 
 def word_length_threshold(training_file, development_file):
-
-    # import the training and development data
+   # import the training and development data
     training_words, training_labels = load_file(training_file)
     development_words, development_labels = load_file(development_file)
 
-    # TRAINING
-    # convert the list into the length of the word
-    training_length = length_of_word_list(training_words)
+    # convert the allwords into list  from training_words
+    lw_training = length_of_word_list(training_words)
 
-    # find the median of the length of the word
-    median_length = np.median(training_length)
+    # FINDING THRESHOLD
+    # finding the threshold of the len_word_list; FINDING THRESHOLD
+    lw_median = np.median(lw_training)
 
-    lw_more_than_median = training_words >= median_length
+    # #generate predictions
+    # #classify base on the threshold
 
-    d_res_bool = lw_more_than_median + 0
+    clf_training = classify_based_on_threshold(lw_training, lw_median)
+    training_performance = prediction_metrics(clf_training, training_labels)
 
-    test_predictions(d_res_bool, dev_label)
+    print("===== Training Data Result =====")
+    # print the result for training
+    test_predictions(clf_training, training_labels)
 
-    training_performance = [tprecision, trecall, tfscore]
-    development_performance = [dprecision, drecall, dfscore]
+    # generate predicition for development
+    lw_development = length_of_word_list(development_words)
+    clf_development = classify_based_on_threshold(lw_development, lw_median)
+
+    # return the metrics of the development data
+    development_performance = prediction_metrics(
+        clf_development, development_labels)
+
+    # print the result
+    print("===== Development Data Result =====")
+    test_predictions(clf_training, training_labels)
+
     return training_performance, development_performance
 
 
 # 2.3: Word frequency thresholding
-
-# Loads Google NGram counts
-
+# Loads Google NGRAM counts
 
 def load_ngram_counts(ngram_counts_file):
     counts = defaultdict(int)
@@ -225,15 +259,7 @@ def normalize(features):
     return X_scaled
 
 
-def prediction_metrics(y_pred, y_true):
-    prec_test = get_precision(y_pred, y_true)
-    rec_test = get_recall(y_pred, y_true)
-    f_score_test = f_score(y_pred, y_true)
-
-    return prec_test, rec_test, f_score_test
-
 # shows the result of the predicition based on the recall, f_score, and precision.
-
 
 def test_predictions(y_prediction, y_actual):
     prec, rec, f_score = prediction_metrics(y_prediction, y_actual)
@@ -265,59 +291,91 @@ def frequency_list(word_list, counts):
 
 
 def naive_bayes(training_file, development_file, counts):
-    # Load data
-    # load the file and n_gram
+
+    # import the training and development data
+    training_words, training_labels = load_file(training_file)
+    development_words, development_labels = load_file(development_file)
+
+    # generate feature
+    training_features = generate_feature(training_words, counts)
+    development_features = generate_feature(development_words, counts)
+
+    # normalize
+    training_features = normalize(training_features)
+    development_features = normalize(development_features)
+
+    # train the model
+    y_test_reshape = np.reshape(training_labels, (-1, 1))
+    clf = GaussianNB()
+    clf.fit(training_features, y_test_reshape)
+
+    # generate predictions
+
+    training_predictions = clf.predict(y_test_reshape)
+    # development_predictions = clf.predict(development_features)
+
+    # return the metrics of the training data
+    training_performance = prediction_metrics(
+        training_predictions, y_test_reshape)
+
+    # return the metrics of the development data
+    development_performance = prediction_metrics(
+        development_predictions, development_labels)
+
+    # print the result
+    print("===== Training Data Result =====")
+    test_predictions(training_predictions, training_labels)
 
     # TRAINING
     # generate all the feature
-    feat_trn = generate_feature(w_training, counts)
+    # feat_trn = generate_feature(w_training, counts)
 
     # normalize the feature
-    X_scaled_training = normalize(feat_trn)
+    # X_scaled_training = normalize(feat_trn)
 
     # Split the model
-    print("split the training data")
-    X_train_t, X_test_t, y_train_t, y_test_t = train_test_split(
-        X_scaled_training, y_training, test_size=0.3, random_state=42)
+    # print("split the training data")
+    # X_train_t, X_test_t, y_train_t, y_test_t = train_test_split(
+    #     X_scaled_training, y_training, test_size=0.3, random_state=42)
 
     # Run the model
-    model = GaussianNB()
-    print("generate training")
+    # model = GaussianNB()
+    # print("generate training")
 
     # train the model for training
-    model.fit(X_train_t, y_train_t)
+    # model.fit(X_train_t, y_train_t)
 
     # predict the model for training
-    y_test_reshape = np.reshape(y_test_t, (-1, 1))
-    y_pred_res = model.predict(X_test_t)
+    # y_test_reshape = np.reshape(y_test_t, (-1, 1))
+    # y_pred_res = model.predict(X_test_t)
 
     # show metrics of the result for training
-    test_predictions(y_pred_res, y_test_reshape)
+    # test_predictions(y_pred_res, y_test_reshape)
 
     # DEVELOPMENT
-    w_development, y_development = load_file(
-        '/gdrive/MyDrive/cis530/data/complex_words_development.txt')
+    # w_development, y_development = load_file(
+    #     '/gdrive/MyDrive/cis530/data/complex_words_development.txt')
 
-    # generate feature based on development file
-    feat_dev = generate_feature(w_development, counts)
-    # normalize the development
-    X_scaled_develop = normalize(feat_dev)
+    # # generate feature based on development file
+    # feat_dev = generate_feature(w_development, counts)
+    # # normalize the development
+    # X_scaled_develop = normalize(feat_dev)
 
-    # reshape the y_actual
-    y_dev_reshape = np.reshape(y_development, (-1, 1))
+    # # reshape the y_actual
+    # y_dev_reshape = np.reshape(y_development, (-1, 1))
 
-    # predict based on the X_scaled
-    y_dev_prediction = model.predict(X_scaled_develop)
+    # # predict based on the X_scaled
+    # y_dev_prediction = model.predict(X_scaled_develop)
 
-    # print the f1, recall, precision.
-    print('test development')
-    test_predictions(y_dev_prediction, y_dev_reshape)
+    # # print the f1, recall, precision.
+    # print('test development')
+    # test_predictions(y_dev_prediction, y_dev_reshape)
 
-    print('get all f1 score')
+    # print('get all f1 score')
 
-    training_performance = (tprecision, trecall, tfscore)
-    development_performance = (dprecision, drecall, dfscore)
-    return development_performance
+    # training_performance = (tprecision, trecall, tfscore)
+    # development_performance = (dprecision, drecall, dfscore)
+    # return development_performance
 
 # 2.5: Logistic Regression
 
@@ -346,3 +404,5 @@ if __name__ == "__main__":
 
     ngram_counts_file = "ngram_counts.txt.gz"
     counts = load_ngram_counts(ngram_counts_file)
+
+    naive_bayes(training_file, development_file, counts)
