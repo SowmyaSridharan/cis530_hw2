@@ -22,6 +22,17 @@ import gzip
 
 def get_precision(y_pred, y_true):
     # YOUR CODE HERE...
+    true_positive = 0
+    false_positive = 0
+
+    for y_p, y_a in list(zip(y_pred, y_true)):
+        if y_p == 1 and y_a == 1:
+            true_positive += 1
+        if y_p == 0 and y_a == 1:
+            false_positive += 1
+
+    sum = false_positive + true_positive
+    precision = true_positive / sum if sum else 1
 
     return precision
 
@@ -30,6 +41,18 @@ def get_precision(y_pred, y_true):
 
 def get_recall(y_pred, y_true):
     # YOUR CODE HERE...
+    true_positive = 0
+    false_negative = 0
+
+    for y_p, y_a in list(zip(y_pred, y_true)):
+
+        if y_p == 1 and y_a == 1:
+            true_positive += 1
+
+        if y_p == 1 and y_a == 0:
+            false_negative += 1
+
+    recall = true_positive / (true_positive + false_negative)
 
     return recall
 
@@ -37,7 +60,11 @@ def get_recall(y_pred, y_true):
 
 
 def get_fscore(y_pred, y_true):
-    # YOUR CODE HERE...
+
+    prec = get_precision(y_pred, y_true)
+    rec = get_recall(y_pred, y_true)
+    tot = prec + rec
+    fscore = 2 * (prec * rec) / (prec + rec) if tot else 0
 
     return fscore
 
@@ -70,25 +97,78 @@ def all_complex_feature(words):
 
 
 def all_complex(data_file):
-    # YOUR CODE HERE...
+    words, labels = load_file(data_file)
+
+    precision = get_precision()
+
     performance = [precision, recall, fscore]
     return performance
 
 
 # 2.2: Word length thresholding
 
+# ADDITIONAL CODE
+# length of each of the word and add into the list
+def length_of_word_list(pandas_list):
+    ret_list = []
+    for k in pandas_list:
+        ret_list.append(len(k))
+
+    ret_list = np.array(ret_list)
+
+    return ret_list
+
+
+def average_of_length(num_list):
+    print(type(num_list))
+    avg_length = sum(num_list) / len(num_list)
+    return avg_length
+
+
+def average_of_length(num_list):
+    print(type(num_list))
+    avg_length = sum(num_list) / len(num_list)
+    return avg_length
+
+
+# MAIN CODE
 # Makes feature matrix for word_length_threshold
 def length_threshold_feature(words, threshold):
+    res = []
+    for word in words:
+        if len(word) >= threshold:
+            res.append(1)
+        else:
+            res.append(0)
+    return res
 
-    # Finds the best length threshold by f-score, and uses this threshold to
-    # classify the training and development set
+# Finds the best length threshold by f-score, and uses this threshold to
+# classify the training and development set
 
 
 def word_length_threshold(training_file, development_file):
-    # YOUR CODE HERE
+
+    # import the training and development data
+    training_words, training_labels = load_file(training_file)
+    development_words, development_labels = load_file(development_file)
+
+    # TRAINING
+    # convert the list into the length of the word
+    training_length = length_of_word_list(training_words)
+
+    # find the median of the length of the word
+    median_length = np.median(training_length)
+
+    lw_more_than_median = training_words >= median_length
+
+    d_res_bool = lw_more_than_median + 0
+
+    test_predictions(d_res_bool, dev_label)
+
     training_performance = [tprecision, trecall, tfscore]
     development_performance = [dprecision, drecall, dfscore]
     return training_performance, development_performance
+
 
 # 2.3: Word frequency thresholding
 
@@ -121,11 +201,120 @@ def word_frequency_threshold(training_file, development_file, counts):
 
 # 2.4: Naive Bayes
 
+# generate all feature
+
+
+def generate_feature(x_dataset, counts):
+    # generate length of word list
+    lwl = length_of_word_list(x_dataset)
+
+    # generate frequency list
+    fwf = frequency_list(x_dataset, counts)
+
+    #hstack or concat
+    feat_combine = np.hstack([lwl, fwf])
+    return feat_combine
+
+
+# normalization
+def normalize(features):
+    mean = np.mean(features)
+    std_dev = np.std(features)
+    delta = features - mean
+    X_scaled = delta / std_dev
+    return X_scaled
+
+
+def prediction_metrics(y_pred, y_true):
+    prec_test = get_precision(y_pred, y_true)
+    rec_test = get_recall(y_pred, y_true)
+    f_score_test = f_score(y_pred, y_true)
+
+    return prec_test, rec_test, f_score_test
+
+# shows the result of the predicition based on the recall, f_score, and precision.
+
+
+def test_predictions(y_prediction, y_actual):
+    prec, rec, f_score = prediction_metrics(y_prediction, y_actual)
+
+    print("Precision result is %f" % prec)
+    print("Recall result is %f" % rec)
+    print("F-score test result is %f" % f_score)
+
+
+def length_of_word_list(word_list):
+    ret_list = []
+    for x in word_list:
+        l_w = len(x)
+        l_f = [float(l_w)]
+        ret_list.append(l_f)
+
+    return np.array(ret_list)
+
+
+def frequency_list(word_list, counts):
+    ret_list = []
+    for x in word_list:
+        f_w = counts[x]
+        f_f = [float(f_w)]
+        ret_list.append(f_f)
+    return np.array(ret_list)
+
 # Trains a Naive Bayes classifier using length and frequency features
 
 
 def naive_bayes(training_file, development_file, counts):
-    # YOUR CODE HERE
+    # Load data
+    # load the file and n_gram
+
+    # TRAINING
+    # generate all the feature
+    feat_trn = generate_feature(w_training, counts)
+
+    # normalize the feature
+    X_scaled_training = normalize(feat_trn)
+
+    # Split the model
+    print("split the training data")
+    X_train_t, X_test_t, y_train_t, y_test_t = train_test_split(
+        X_scaled_training, y_training, test_size=0.3, random_state=42)
+
+    # Run the model
+    model = GaussianNB()
+    print("generate training")
+
+    # train the model for training
+    model.fit(X_train_t, y_train_t)
+
+    # predict the model for training
+    y_test_reshape = np.reshape(y_test_t, (-1, 1))
+    y_pred_res = model.predict(X_test_t)
+
+    # show metrics of the result for training
+    test_predictions(y_pred_res, y_test_reshape)
+
+    # DEVELOPMENT
+    w_development, y_development = load_file(
+        '/gdrive/MyDrive/cis530/data/complex_words_development.txt')
+
+    # generate feature based on development file
+    feat_dev = generate_feature(w_development, counts)
+    # normalize the development
+    X_scaled_develop = normalize(feat_dev)
+
+    # reshape the y_actual
+    y_dev_reshape = np.reshape(y_development, (-1, 1))
+
+    # predict based on the X_scaled
+    y_dev_prediction = model.predict(X_scaled_develop)
+
+    # print the f1, recall, precision.
+    print('test development')
+    test_predictions(y_dev_prediction, y_dev_reshape)
+
+    print('get all f1 score')
+
     training_performance = (tprecision, trecall, tfscore)
     development_performance = (dprecision, drecall, dfscore)
     return development_performance
